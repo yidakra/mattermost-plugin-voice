@@ -1,0 +1,21 @@
+FROM golang:1.22
+
+# Install build tools and Node.js 16
+RUN apt update && \
+    apt -y install build-essential curl git && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt -y install nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add non-root user (optional)
+RUN addgroup --gid 1000 node && \
+    useradd --create-home --uid 1000 --gid node --shell /bin/sh node
+
+# Install golangci-lint
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+
+WORKDIR /plugin
+COPY . .
+RUN git config --global --add safe.directory /plugin
+
+RUN make dist
